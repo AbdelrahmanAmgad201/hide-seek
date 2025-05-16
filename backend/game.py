@@ -105,7 +105,7 @@ class Game:
         return {"probabilities": strategy, "value": value}
 
 
-G = Game(2 , is_2d= True)
+G = Game(4 , is_2d= True)
 print(G.board)
 
 # board = [[3,  -1,  -3],

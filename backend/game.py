@@ -5,11 +5,62 @@ from scipy.optimize import linprog
 class Game:
     board = None
     N = None
+    is_2d = None
 
-    def __init__(self, n):
-        self.N = n
-        self.board = np.random.choice([1, 2, 3], size=(n, n))  # Random values {1, 2, 3}
-        np.fill_diagonal(self.board, -1 * np.diag(self.board))  # Multiply diagonal by -1
+    def __init__(self, n , is_2d= True , apply_proximity=True):
+        if(is_2d == False):
+            self.N = n
+        else:
+            self.N = n * n
+
+        self.is_2d = is_2d
+        self.board = np.random.choice([1, 2, 3], size=(self.N, self.N)).astype(float)
+
+        print(self.board)
+        for i in range(self.N):
+            self.board[i][i] = self.board[i][i] * -1
+        print(self.board)
+        if apply_proximity:
+           self.update_proximity()
+
+    def update_proximity(self):
+        if(self.is_2d == True):
+            self.proximity_2d_strategy()
+        else:
+            self.proximity_1d_strategy()
+
+    def proximity_2d_strategy(self):
+        print("2D proximity strategy")
+        for i in range(self.N):
+            for j in range(self.N):
+                if i == j:
+                    continue
+                modulu = np.sqrt(self.N)
+                i_first , j_first = i // modulu, i % modulu
+                i_second , j_second = j // modulu, j % modulu
+                distance = abs(i_first - i_second) + abs(j_first - j_second)
+                if distance == 1:
+                    print(f"real point {i_first}, {j_first} and point {i_second}, {j_second} distance 1 at {i}, {j}")
+
+                    self.board[i][j] = 0.5 * self.board[i][j]
+                elif distance == 2:
+                    print(f"real point {i_first}, {j_first} and point {i_second}, {j_second} distance 2 at {i}, {j}")
+                    self.board[i][j] = 0.75 * self.board[i][j]
+        
+
+    def proximity_1d_strategy(self):
+        print("1D proximity strategy")
+        for i in range(self.N):
+            for j in range(self.N):
+                if i == j:
+                    continue
+                distance = abs(i - j)
+                if distance == 1:
+                    print("distance 1 at {} , {}".format(i, j))
+                    self.board[i][j] = 0.5 * self.board[i][j]
+                elif distance == 2:
+                    print("distance 2 at {} , {}".format(i, j))
+                    self.board[i][j] = 0.75 * self.board[i][j]
 
     def solve(self, player=1):
         if player not in [1, 2]:
@@ -17,33 +68,7 @@ class Game:
 
         return self.solve_engine(self.board, player)
 
-    def simulate(self, player=1, n=100):
-        player_wins = 0
-        computer_wins = 0
-        player_score = 0
-        computer_score = 0
 
-        for _ in range(n):
-            # Randomly choose who is the seeker (player or computer)
-            current_player = np.random.choice([1, 2]) 
-            result = self.solve_engine(self.board, player=current_player)
-
-            if current_player == player:
-                player_score += result["value"]
-                if result["value"] > 0:
-                    player_wins += 1
-                else:
-                    computer_wins += 1
-            else:
-                computer_score += result["value"]
-                if result["value"] > 0:
-                    computer_wins += 1
-                else:
-                    player_wins += 1
-
-        print(f"Simulation Results after {n} rounds:")
-        print(f"Player Wins: {player_wins}, Total Score: {player_score}")
-        print(f"Computer Wins: {computer_wins}, Total Score: {computer_score}")
 
     def solve_engine(self, board, player=1):
         A = np.asarray(board, dtype=float)
@@ -80,7 +105,7 @@ class Game:
         return {"probabilities": strategy, "value": value}
 
 
-G = Game(3)
+G = Game(2 , is_2d= True)
 print(G.board)
 
 # board = [[3,  -1,  -3],
@@ -92,4 +117,3 @@ print(G.board)
 
 print(G.solve(player=1))
 print(G.solve(player=2))
-G.simulate(player=1, n=100)

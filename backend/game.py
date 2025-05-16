@@ -14,9 +14,17 @@ class Game:
             self.N = n * n
 
         self.is_2d = is_2d
-        self.board = np.random.choice([1, 2, 3], size=(self.N, self.N)).astype(float)
+        self.board = np.zeros((self.N, self.N), dtype=float)
+        # 1. Set each row to a random value from 1 to 3
+        for i in range(self.N):
+            val = np.random.randint(1, 4)
+            self.board[i, :] = val
+        # 2. Set each diagonal element to a random value from -1 to -3
+        for i in range(self.N):
+            self.board[i, i] = -np.random.randint(1, 4)
 
         print(self.board)
+
         for i in range(self.N):
             self.board[i][i] = self.board[i][i] * -1
         print(self.board)
@@ -105,7 +113,7 @@ class Game:
         return {"probabilities": strategy, "value": value}
 
 
-G = Game(4 , is_2d= True)
+G = Game(4 , is_2d= False)
 print(G.board)
 
 # board = [[3,  -1,  -3],

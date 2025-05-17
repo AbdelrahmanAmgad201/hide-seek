@@ -1,0 +1,71 @@
+/* Add these styles to your CSS file */
+
+.analysis-results {
+  width: 100%;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.analysis-results h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 0.5rem;
+}
+
+.optimal-strategy-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.optimal-strategy-table th,
+.optimal-strategy-table td {
+  padding: 0.8rem;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+}
+
+.optimal-strategy-table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  color: #333;
+}
+
+.optimal-strategy-table th:first-child {
+  text-align: left;
+  width: 120px;
+}
+
+/* Seeker row styling */
+.optimal-strategy-table tr:nth-child(2) th {
+  color: #3498db;
+}
+
+/* Hider row styling */
+.optimal-strategy-table tr:nth-child(3) th {
+  color: #e74c3c;
+}
+
+.game-value {
+  background-color: #f8f9fa;
+  padding: 1.2rem;
+  border-radius: 6px;
+  border-left: 4px solid #2ecc71;
+}
+
+.game-value h3 {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  color: #34495e;
+}
+
+.value-explanation {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+}

@@ -24,6 +24,7 @@ function App() {
   const [world, setWorld] = useState([]);
   const [showMatrix, setShowMatrix] = useState(false);
   const [selectedTiles, setSelectedTiles] = useState({}); // { 3: 'user', 7: 'computer' }
+  const [showPopup, setShowPopup] = useState(false);
 
 
 
@@ -40,7 +41,7 @@ function App() {
   const refRoleSeek = useRef(null);
 
   const handleTileClick = (index) => {
-    if (index in selectedTiles) return; // Prevent duplicate clicks
+    if (index in selectedTiles) return; 
 
     const newSelected = { ...selectedTiles, [index]: 'user' };
 
@@ -117,6 +118,31 @@ function App() {
 
   return (
     <div className="container">
+        <button
+          className="info-icon"
+          onClick={() => setShowPopup(true)}
+            title="Show all images"
+        >
+           🖼️
+        </button>
+        {showPopup && (
+          <div className="popup-overlay" onClick={() => setShowPopup(false)}>
+            <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+              <h3>Image Reference</h3>
+              <div className="image-list">
+                {Object.entries(images).map(([key, path]) => (
+                  <div key={key} className="image-item">
+                    <img src={path} alt={key} />
+                    <span>{"hider "+key+" seeker"}</span>
+                  </div>
+                ))}
+              </div>
+              <button className="close-button" onClick={() => setShowPopup(false)}>Close</button>
+            </div>
+          </div>
+        )}
+
+
       <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className={`top-side-bar ${isCollapsed ? 'collapsedBtn' : ''}`}>
           <button className="toggle-button" onClick={toggleSidebar}>

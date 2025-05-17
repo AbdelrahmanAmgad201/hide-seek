@@ -23,11 +23,7 @@ class Game:
         for i in range(self.N):
             self.board[i, i] = -np.random.randint(1, 4)
 
-        print(self.board)
-
-        for i in range(self.N):
-            self.board[i][i] = self.board[i][i] * -1
-        print(self.board)
+        # print(self.board)
         if apply_proximity:
            self.update_proximity()
 
@@ -48,11 +44,11 @@ class Game:
                 i_second , j_second = j // modulu, j % modulu
                 distance = abs(i_first - i_second) + abs(j_first - j_second)
                 if distance == 1:
-                    print(f"real point {i_first}, {j_first} and point {i_second}, {j_second} distance 1 at {i}, {j}")
+                    # print(f"real point {i_first}, {j_first} and point {i_second}, {j_second} distance 1 at {i}, {j}")
 
                     self.board[i][j] = 0.5 * self.board[i][j]
                 elif distance == 2:
-                    print(f"real point {i_first}, {j_first} and point {i_second}, {j_second} distance 2 at {i}, {j}")
+                    # print(f"real point {i_first}, {j_first} and point {i_second}, {j_second} distance 2 at {i}, {j}")
                     self.board[i][j] = 0.75 * self.board[i][j]
         
 
@@ -64,10 +60,10 @@ class Game:
                     continue
                 distance = abs(i - j)
                 if distance == 1:
-                    print("distance 1 at {} , {}".format(i, j))
+                    # print("distance 1 at {} , {}".format(i, j))
                     self.board[i][j] = 0.5 * self.board[i][j]
                 elif distance == 2:
-                    print("distance 2 at {} , {}".format(i, j))
+                    # print("distance 2 at {} , {}".format(i, j))
                     self.board[i][j] = 0.75 * self.board[i][j]
 
     def solve(self, player=1):
@@ -113,8 +109,8 @@ class Game:
         return {"probabilities": strategy, "value": value}
 
 
-G = Game(4 , is_2d= False)
-print(G.board)
+# G = Game(4 , is_2d= False)
+# print(G.board)
 
 # board = [[3,  -1,  -3],
 #          [ -2, 4,  -1],
@@ -123,5 +119,5 @@ print(G.board)
 # print(G.solve_engine(board, player=1))
 # print(G.solve_engine(board, player=2))
 
-print(G.solve(player=1))
-print(G.solve(player=2))
+# print(G.solve(player=1))
+# print(G.solve(player=2))

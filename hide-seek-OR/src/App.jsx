@@ -1,32 +1,56 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { initGame, solveGame } from './api';
 import sidebarImage from './assets/menu.png';
 import './App.css';
+import './boardMatrix.css';
 
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [settings, setSettings] = useState(null);
+  const [data, setData] = useState(null);
 
   const ref2D = useRef(null);
   const refProximity = useRef(null);
   const refN = useRef(null);
   const refModeInteractive = useRef(null);
+  const refModeAnalysis = useRef(null);
+  const refRoleHide = useRef(null);
+  const refRoleSeek = useRef(null);
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+    setIsCollapsed((prev) => {
+      const newCollapsed = !prev;
+      // If we're opening the sidebar and settings exist, apply them
+      if (!newCollapsed && settings) {
+        setTimeout(() => {
+          ref2D.current.checked = settings.is2D;
+          refProximity.current.checked = settings.proximity;
+          refN.current.value = settings.n;
+          refModeInteractive.current.checked = settings.mode === 'interactive';
+          refModeAnalysis.current.checked = settings.mode === 'analysis';
+          if (refRoleHide.current && refRoleSeek.current) {
+            refRoleHide.current.checked = settings.role === 'hide';
+            refRoleSeek.current.checked = settings.role === 'seek';
+          }
+        }, 0); // Ensure DOM is updated before setting
+      }
+      return newCollapsed;
+    });
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const newSettings = {
       is2D: ref2D.current.checked,
       proximity: refProximity.current.checked,
       n: parseInt(refN.current.value) || 1,
       mode: refModeInteractive.current.checked ? 'interactive' : 'analysis',
+      role: refModeInteractive.current.checked ? 
+        (refRoleHide.current.checked ? 'hide' : 'seek') : null
     };
-
     setSettings(newSettings);
 
-    // Debug log
-    console.log(newSettings);
+    setData(await initGame(newSettings));
+    console.log('Initialized with settings:', newSettings, 'Response:', data);
   };
 
   return (
@@ -63,8 +87,11 @@ function App() {
                   type="radio"
                   name="mode"
                   value="interactive"
-                  defaultChecked
                   ref={refModeInteractive}
+                  onChange={() => {
+                    const roleOptions = document.getElementById("role-options");
+                    if (roleOptions) roleOptions.style.display = "block";
+                  }}
                 />
                 Interactive
               </label>
@@ -73,8 +100,39 @@ function App() {
                   type="radio"
                   name="mode"
                   value="analysis"
+                  defaultChecked
+                  ref={refModeAnalysis}
+                  onChange={() => {
+                    const roleOptions = document.getElementById("role-options");
+                    if (roleOptions) roleOptions.style.display = "none";
+                  }}
                 />
                 Analysis
+              </label>
+            </div>
+
+            <div id="role-options" className="sidebar-option" style={{
+              display: refModeInteractive?.current?.checked ? "block" : "none"
+            }}>
+              <p>Choose your role:</p>
+              <label>
+                <input
+                  type="radio"
+                  name="role"
+                  value="hide"
+                  defaultChecked
+                  ref={refRoleHide}
+                />
+                Hide
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="role"
+                  value="seek"
+                  ref={refRoleSeek}
+                />
+                Seek
               </label>
             </div>
 
@@ -85,9 +143,30 @@ function App() {
         )}
       </div>
 
-      <div className="main">
-        
-      </div>
+      {settings != null && data != null && 
+        <div className="main">
+          {/* Game Matrix */}
+          <h1>Board Matrix</h1>
+          <table className="board-table">
+            <tbody>
+              <tr>
+                <th></th>
+                {data.board[0].map((_, colIndex) => (
+                  <th key={colIndex}>S{colIndex + 1}</th>
+                ))}
+              </tr>
+              {data.board.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  <th>H{rowIndex + 1}</th>
+                  {row.map((cell, colIndex) => (
+                    <td key={colIndex}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
   );
 }

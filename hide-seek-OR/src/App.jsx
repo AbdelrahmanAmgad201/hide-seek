@@ -2,7 +2,20 @@ import { useState, useRef, useEffect } from 'react';
 import { initGame, solveGame } from './api';
 import sidebarImage from './assets/menu.png';
 import './App.css';
+import './optimalStrat.css';
 import './boardMatrix.css';
+
+const images = {
+  "1:1": 'src/assets/robber.png',
+  "1:2": 'src/assets/farm-house.png',
+  "1:3": 'src/assets/cave.png',
+  "2:1": 'src/assets/farm.png',
+  "2:2": 'src/assets/nurse.png',
+  "2:3": 'src/assets/farmhouse.png',
+  "3:1": 'src/assets/field.png',
+  "3:2": 'src/assets/hay-bale.png',
+  "3:3": 'src/assets/policeman.png',
+};
 
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -39,6 +52,7 @@ function App() {
       return newCollapsed;
     });
   };
+  
 
   const handleGenerate = async () => {
     const newSettings = {
@@ -50,12 +64,27 @@ function App() {
         (refRoleHide.current.checked ? 'hide' : 'seek') : null
     };
     setSettings(newSettings);
-    setData(await initGame(newSettings));
+    const newData = await initGame(newSettings)
+    setData(newData);
     setSeekerOptimal(await solveGame(1));
     setHideOptimal(await solveGame(2));
-    console.log('Initialized with settings:', newSettings, 'Response:', data);
-    console.log(seekerOptimal);
-    console.log(hideOptimal);
+  
+    console.log('Initialized with settings:', newSettings, 'Response:', newData);
+
+    const n = newSettings.n;
+    const board = newData.board;
+    const world = [];
+      for (let j = 0; j < n; j++) {
+        let neighborValue = j + 1;
+        if (j + 1 >= n) {
+          neighborValue = j - 1;
+        } 
+        console.log(neighborValue)
+        const key = `${board[j][neighborValue]}:${board[j][j]*-1}`;
+        console.log(key)
+        world[j] = images[key] || null; 
+      }
+    console.log('World grid with images:', world);
   };
 
   return (

@@ -1,0 +1,16 @@
+.board-table {
+  border-collapse: collapse;
+  font-size: 1.5rem;
+}
+
+.board-table td {
+  border: 1px solid #000;
+  width: 60px;
+  height: 60px;
+  text-align: center;
+}
+
+.board-table th {
+    padding: 15px;
+    font-size: 1.25rem;
+}

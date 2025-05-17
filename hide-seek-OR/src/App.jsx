@@ -1,10 +1,22 @@
 import { useState, useRef } from 'react';
 import sidebarImage from './assets/menu.png';
 import './App.css';
+images = [
+          'src\assets\robber.png',
+          'src\assets\farm-house.png',
+          'src\assets\cave.png',
+          'src\assets\farm.png',
+          'src\assets\nurse.png',
+          'src\assets\farmhouse.png',
+          'src\assets\field.png',
+          'src\assets\hay-bale.png',
+          'src\assets\policeman.png',
+]
 
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [settings, setSettings] = useState(null);
+  const [imageMap, setImageMap] = useState({});
 
   const ref2D = useRef(null);
   const refProximity = useRef(null);
@@ -24,9 +36,6 @@ function App() {
     };
 
     setSettings(newSettings);
-
-    // Debug log
-    console.log(newSettings);
   };
 
   return (
@@ -85,9 +94,7 @@ function App() {
         )}
       </div>
 
-      <div className="main">
-        
-      </div>
+    
     </div>
   );
 }

@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { initGame, solveGame } from './api';
 import sidebarImage from './assets/menu.png';
 import './App.css';
-
+import './optimalStrat.css';
 import './boardMatrix.css';
+
 const images = {
   "1:1": 'src/assets/robber.png',
   "1:2": 'src/assets/farm-house.png',
@@ -27,6 +28,8 @@ function App() {
 
 
 
+  const [hideOptimal, setHideOptimal] = useState(null);
+  const [seekerOptimal, setSeekerOptimal] = useState(null);
 
   const ref2D = useRef(null);
   const refProximity = useRef(null);
@@ -91,6 +94,9 @@ function App() {
     setSettings(newSettings);
     const newData = await initGame(newSettings)
     setData(newData);
+    setSeekerOptimal(await solveGame(1));
+    setHideOptimal(await solveGame(2));
+  
     console.log('Initialized with settings:', newSettings, 'Response:', newData);
 
     const n = newSettings.n;
@@ -213,7 +219,7 @@ function App() {
                   alt={`Tile ${i},${j}`}
                    className={`tile-img ${selectedTiles[i * settings.n + j] === 'user' ? 'user-selected' : selectedTiles[i * settings.n + j] === 'computer' ? 'computer-selected' : ''}`}
                   onClick={() => handleTileClick(i * settings.n + j)}
-                  style={{ cursor: ((i * settings.n + j) in selectedTiles) ? 'not-allowed' : 'pointer' }}
+                  style={{ cursor: ((i * settings.n + j) in selectedTiles || settings.mode =='analysis') ? 'not-allowed' : 'pointer' }}
                 />
               ))}
             </div>
@@ -228,7 +234,7 @@ function App() {
               alt={`Tile ${i}`}
               className={`tile-img ${selectedTiles[i] === 'user' ? 'user-selected' : selectedTiles[i] === 'computer' ? 'computer-selected' : ''}`}
               onClick={() => handleTileClick(i)}
-              style={{ cursor: (i in selectedTiles) ? 'not-allowed' : 'pointer' }}
+              style={{ cursor: (i in selectedTiles || settings.mode =='analysis') ? 'not-allowed' : 'pointer' }}
             />
           ))}
         </div>
@@ -267,10 +273,49 @@ function App() {
   </div>
 )}
 
-
-
-
-    </div>
+          
+          {/* Analysis Results */}
+          {settings&& settings.mode === 'analysis' && 
+           hideOptimal != null && seekerOptimal != null && (
+            <div className="analysis-results">
+              <h2>Optimal Strategy</h2>
+              
+              <table className="optimal-strategy-table">
+                <tbody>
+                  {/* Header row with column labels */}
+                  <tr>
+                    <th></th>
+                    {data.board[0].map((_, colIndex) => (
+                      <th key={colIndex}>S{colIndex + 1}</th>
+                    ))}
+                  </tr>
+                  
+                  {/* Seeker probabilities row */}
+                  <tr>
+                    <th>Seeker</th>
+                    {seekerOptimal.result.probabilities.map((prob, index) => (
+                      <td key={index}>{(prob * 100).toFixed(1)}%</td>
+                    ))}
+                  </tr>
+                  
+                  {/* Hider probabilities row */}
+                  <tr>
+                    <th>Hider</th>
+                    {hideOptimal.result.probabilities.map((prob, index) => (
+                      <td key={index}>{(prob * 100).toFixed(1)}%</td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+              
+              {/* Game Value */}
+              <div className="game-value">
+                <h3>Expected Payoff = {hideOptimal.result.value.toFixed(3)}</h3>
+              </div>
+            </div>
+          )}
+        </div>
+   
   );
 }
 

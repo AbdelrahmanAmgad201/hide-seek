@@ -130,7 +130,7 @@
 
 .main {
   flex-grow: 1;
-  background-color: #ecf0f1;
+  background-color: #f1f5f6;
   padding: 2rem;
   overflow-y: auto;
   display: flex;

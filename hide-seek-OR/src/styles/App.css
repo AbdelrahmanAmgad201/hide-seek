@@ -259,3 +259,11 @@
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+.score-display {
+  margin-top: 10px;
+  font-size: 1.2em;
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  color: #333;
+}

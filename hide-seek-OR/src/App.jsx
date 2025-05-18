@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { initGame, solveGame } from './api';
-import {Simulation, simulateGames} from './simulation';
+import {Simulation, simulateGames,chooseIndexFromDistribution} from './simulation';
 import BoardMatrix from './BoardMatrix';
 import AnalysisResults from './AnalysisResults';
 import AllImagesPopup from './AllImagesPopup';
 import sidebarImage from './assets/menu.png';
+
 import './styles/App.css';
 import './styles/optimalStrat.css';
 import './styles/simulate.css';
@@ -32,6 +33,9 @@ function App() {
   const [seekerOptimal, setSeekerOptimal] = useState(null);
   const [simulationData, setSimulationData] = useState(null);
   const [simulationCount, setSimulationCount] = useState(100);
+  const [hiderScore, setHiderScore] = useState(0);
+  const [seekerScore, setSeekerScore] = useState(0);
+
 
   const [showMatrix, setShowMatrix] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -56,9 +60,21 @@ function App() {
       .filter((i) => !(i in newSelected));
 
     if (availableIndices.length > 0) {
-      const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+      let randomIndex =0 
+      if(settings.role == "seeker"){
+        randomIndex = chooseIndexFromDistribution(hideOptimal.result.probabilities);
+      }else{
+        randomIndex = chooseIndexFromDistribution(seekerOptimal.result.probabilities);
+      }
+        
       newSelected[randomIndex] = 'computer';
       console.log(`Computer chose index: ${randomIndex}`);
+      const userIndex = index;
+      const computerIndex = randomIndex;
+      const payoff = data.board;
+
+      setSeekerScore(seekerScore+-payoff[userIndex][computerIndex]);
+      setHiderScore(hiderScore+payoff[userIndex][computerIndex]);
     }
 
     setSelectedTiles(newSelected);
@@ -88,6 +104,8 @@ function App() {
   
   const handleGenerate = async () => {
      setSelectedTiles({});  
+     setHiderScore(0);
+     setSeekerScore(0);
 
     const newSettings = {
       is2D: ref2D.current.checked,
@@ -228,6 +246,13 @@ function App() {
 
       {data && settings && (
         <div className="game-section">
+          {settings.mode === 'interactive' && hiderScore !== null && seekerScore !== null && (
+            <div className="score-display">
+              <p><strong>Seeker Score:</strong> {seekerScore}</p>
+              <p><strong>Hider Score:</strong> {hiderScore}</p>
+            </div>
+          )}
+
           {/* Image Grid */}
           <div className="world-grid">
             {settings.is2D ? (

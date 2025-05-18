@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { initGame, solveGame } from './api';
+import {Simulation, simulateGames} from './simulation';
 import sidebarImage from './assets/menu.png';
 import './App.css';
 import './optimalStrat.css';
 import './boardMatrix.css';
+import './simulate.css'
 
 const images = {
   "1:1": 'src/assets/robber.png',
@@ -23,6 +25,8 @@ function App() {
   const [data, setData] = useState(null);
   const [hideOptimal, setHideOptimal] = useState(null);
   const [seekerOptimal, setSeekerOptimal] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [simulationData, setSimulationData] = useState(null);
 
   const ref2D = useRef(null);
   const refProximity = useRef(null);
@@ -53,7 +57,7 @@ function App() {
     });
   };
   
-
+  
   const handleGenerate = async () => {
     const newSettings = {
       is2D: ref2D.current.checked,
@@ -238,7 +242,30 @@ function App() {
               <div className="game-value">
                 <h3>Expected Payoff = {hideOptimal.result.value.toFixed(3)}</h3>
               </div>
+              
+              {/* Simulation Button */}
+              <button 
+                className="simulation-button" 
+                onClick={() => simulateGames(
+                  hideOptimal, 
+                  seekerOptimal, 
+                  data, 
+                  setSimulationData, 
+                  setShowPopup
+                )}
+              >
+                Run Strategy Simulation
+              </button>
             </div>
+          )}
+          
+          {/* Simulation Popup */}
+          {showPopup && simulationData && (
+            <Simulation 
+              simulationData={simulationData} 
+              data={data} 
+              setShowPopup={setShowPopup} 
+            />
           )}
         </div>
       }

@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { initGame, solveGame } from './api';
 import {Simulation, simulateGames} from './simulation';
+import BoardMatrix from './BoardMatrix';
+import AnalysisResults from './AnalysisResults';
+import AllImagesPopup from './AllImagesPopup';
 import sidebarImage from './assets/menu.png';
-import './App.css';
-import './optimalStrat.css';
-import './boardMatrix.css';
-import './simulate.css'
+import './styles/App.css';
+import './styles/optimalStrat.css';
+import './styles/simulate.css';
+import './styles/gameGrid.css';
 
 const images = {
   "1:1": 'src/assets/robber.png',
@@ -24,17 +27,15 @@ function App() {
   const [settings, setSettings] = useState(null);
   const [data, setData] = useState(null);
   const [world, setWorld] = useState([]);
-  const [showMatrix, setShowMatrix] = useState(false);
   const [selectedTiles, setSelectedTiles] = useState({}); // { 3: 'user', 7: 'computer' }
-  const [showPopup, setShowPopup] = useState(false);
-
-
-
-
   const [hideOptimal, setHideOptimal] = useState(null);
   const [seekerOptimal, setSeekerOptimal] = useState(null);
-  const [showPopup, setShowPopup] = useState(false);
   const [simulationData, setSimulationData] = useState(null);
+  const [simulationCount, setSimulationCount] = useState(100);
+
+  const [showMatrix, setShowMatrix] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [showSimulationPopup, setShowSimulationPopup] = useState(false);
 
   const ref2D = useRef(null);
   const refProximity = useRef(null);
@@ -122,30 +123,20 @@ function App() {
 
   return (
     <div className="container">
-        <button
-          className="info-icon"
-          onClick={() => setShowPopup(true)}
-            title="Show all images"
-        >
-           🖼️
-        </button>
-        {showPopup && (
-          <div className="popup-overlay" onClick={() => setShowPopup(false)}>
-            <div className="popup-content" onClick={(e) => e.stopPropagation()}>
-              <h3>Image Reference</h3>
-              <div className="image-list">
-                {Object.entries(images).map(([key, path]) => (
-                  <div key={key} className="image-item">
-                    <img src={path} alt={key} />
-                    <span>{"hider "+key+" seeker"}</span>
-                  </div>
-                ))}
-              </div>
-              <button className="close-button" onClick={() => setShowPopup(false)}>Close</button>
-            </div>
-          </div>
-        )}
+      <button
+        className="info-icon"
+        onClick={() => setShowPopup(true)}
+          title="Show all images"
+      >
+          🖼️
+      </button>
 
+      {showPopup && (
+        <AllImagesPopup 
+          setShowPopup={setShowPopup}
+          images={images}
+        />
+      )}
 
       <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className={`top-side-bar ${isCollapsed ? 'collapsedBtn' : ''}`}>
@@ -234,141 +225,105 @@ function App() {
           </div>
         )}
       </div>
-{data && settings && (
-  <div className="game-section">
-    {/* Image Grid */}
-    <div className="world-grid">
-      {settings.is2D ? (
-        <div className="grid-2d">
-          {Array.from({ length: settings.n }, (_, i) => (
-            <div key={i} className="row">
-              {world.slice(i * settings.n, (i + 1) * settings.n).map((imgSrc, j) => (
-                <img
-                  key={j}
-                  src={imgSrc}
-                  alt={`Tile ${i},${j}`}
-                   className={`tile-img ${selectedTiles[i * settings.n + j] === 'user' ? 'user-selected' : selectedTiles[i * settings.n + j] === 'computer' ? 'computer-selected' : ''}`}
-                  onClick={() => handleTileClick(i * settings.n + j)}
-                  style={{ cursor: ((i * settings.n + j) in selectedTiles || settings.mode =='analysis') ? 'not-allowed' : 'pointer' }}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="row">
-          {world.map((imgSrc, i) => (
-            <img
-              key={i}
-              src={imgSrc}
-              alt={`Tile ${i}`}
-              className={`tile-img ${selectedTiles[i] === 'user' ? 'user-selected' : selectedTiles[i] === 'computer' ? 'computer-selected' : ''}`}
-              onClick={() => handleTileClick(i)}
-              style={{ cursor: (i in selectedTiles || settings.mode =='analysis') ? 'not-allowed' : 'pointer' }}
+
+      {data && settings && (
+        <div className="game-section">
+          {/* Image Grid */}
+          <div className="world-grid">
+            {settings.is2D ? (
+              <div className="grid-2d">
+                {Array.from({ length: settings.n }, (_, i) => (
+                  <div key={i} className="row">
+                    {world.slice(i * settings.n, (i + 1) * settings.n).map((imgSrc, j) => (
+                      <img
+                        key={j}
+                        src={imgSrc}
+                        alt={`Tile ${i},${j}`}
+                        className={`tile-img ${selectedTiles[i * settings.n + j] === 'user' ? 'user-selected' : selectedTiles[i * settings.n + j] === 'computer' ? 'computer-selected' : ''}`}
+                        onClick={() => handleTileClick(i * settings.n + j)}
+                        style={{ cursor: ((i * settings.n + j) in selectedTiles || settings.mode =='analysis') ? 'not-allowed' : 'pointer' }}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="row">
+                {world.map((imgSrc, i) => (
+                  <img
+                    key={i}
+                    src={imgSrc}
+                    alt={`Tile ${i}`}
+                    className={`tile-img ${selectedTiles[i] === 'user' ? 'user-selected' : selectedTiles[i] === 'computer' ? 'computer-selected' : ''}`}
+                    onClick={() => handleTileClick(i)}
+                    style={{ cursor: (i in selectedTiles || settings.mode =='analysis') ? 'not-allowed' : 'pointer' }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Toggle Button */}
+          <button className="toggle-matrix-button" onClick={() => setShowMatrix(prev => !prev)}>
+            {showMatrix ? "Hide Matrix" : "Show Matrix"}
+          </button>
+
+          {/* Matrix Table */}
+          {showMatrix && (
+            <BoardMatrix 
+              data={data} 
             />
-          ))}
+          )}
+    
+          {/* Analysis Results */}
+          {settings && settings.mode === 'analysis' && 
+          hideOptimal != null && seekerOptimal != null && (
+            <div className="analysis-results">
+              <AnalysisResults 
+                data={data}
+                hideOptimal={hideOptimal}
+                seekerOptimal={seekerOptimal}
+              />
+              
+              {/* Simulation controls */}
+              <div className="simulation-controls">
+                <button
+                  className="simulation-button"
+                  onClick={() =>
+                    simulateGames(
+                      hideOptimal,
+                      seekerOptimal,
+                      data,
+                      setSimulationData,
+                      setShowSimulationPopup,
+                      simulationCount        // <-- passes the user‑chosen N
+                    )
+                  }
+                >
+                  Run Simulation
+                </button>
+                <input
+                  className="simulation-input"
+                  type="number"
+                  min="1"
+                  value={simulationCount}
+                  onChange={(e) => setSimulationCount(Number(e.target.value))}
+                  />
+              </div>
+            </div>
+          )}
         </div>
       )}
+      
+      {/* Simulation Popup */}
+      {showSimulationPopup && simulationData && (
+        <Simulation 
+          simulationData={simulationData} 
+          data={data} 
+          setShowPopup={setShowSimulationPopup} 
+        />
+      )}
     </div>
-
-    {/* Toggle Button */}
-    <button className="toggle-matrix-button" onClick={() => setShowMatrix(prev => !prev)}>
-      {showMatrix ? "Hide Matrix" : "Show Matrix"}
-    </button>
-
-    {/* Matrix Table */}
-    {showMatrix && (
-      <div className="main">
-        <h1>Board Matrix</h1>
-        <table className="board-table">
-          <tbody>
-            <tr>
-              <th></th>
-              {data.board[0].map((_, colIndex) => (
-                <th key={colIndex}>S{colIndex + 1}</th>
-              ))}
-            </tr>
-            {data.board.map((row, rowIndex) => (
-              <tr key={rowIndex}>
-                <th>H{rowIndex + 1}</th>
-                {row.map((cell, colIndex) => (
-                  <td key={colIndex}>{cell}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-  </div>
-)}
-
-          
-          {/* Analysis Results */}
-          {settings&& settings.mode === 'analysis' && 
-           hideOptimal != null && seekerOptimal != null && (
-            <div className="analysis-results">
-              <h2>Optimal Strategy</h2>
-              
-              <table className="optimal-strategy-table">
-                <tbody>
-                  {/* Header row with column labels */}
-                  <tr>
-                    <th></th>
-                    {data.board[0].map((_, colIndex) => (
-                      <th key={colIndex}>S{colIndex + 1}</th>
-                    ))}
-                  </tr>
-                  
-                  {/* Seeker probabilities row */}
-                  <tr>
-                    <th>Seeker</th>
-                    {seekerOptimal.result.probabilities.map((prob, index) => (
-                      <td key={index}>{(prob * 100).toFixed(1)}%</td>
-                    ))}
-                  </tr>
-                  
-                  {/* Hider probabilities row */}
-                  <tr>
-                    <th>Hider</th>
-                    {hideOptimal.result.probabilities.map((prob, index) => (
-                      <td key={index}>{(prob * 100).toFixed(1)}%</td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-              
-              {/* Game Value */}
-              <div className="game-value">
-                <h3>Expected Payoff = {hideOptimal.result.value.toFixed(3)}</h3>
-              </div>
-              
-              {/* Simulation Button */}
-              <button 
-                className="simulation-button" 
-                onClick={() => simulateGames(
-                  hideOptimal, 
-                  seekerOptimal, 
-                  data, 
-                  setSimulationData, 
-                  setShowPopup
-                )}
-              >
-                Run Strategy Simulation
-              </button>
-            </div>
-          )}
-          
-          {/* Simulation Popup */}
-          {showPopup && simulationData && (
-            <Simulation 
-              simulationData={simulationData} 
-              data={data} 
-              setShowPopup={setShowPopup} 
-            />
-          )}
-        </div>
-   
   );
 }
 

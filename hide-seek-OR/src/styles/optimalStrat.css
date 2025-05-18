@@ -2,7 +2,6 @@
 
 .analysis-results {
   width: 100%;
-  margin-top: 2rem;
   padding: 1.5rem;
   background-color: #fff;
   border-radius: 8px;
@@ -17,11 +16,17 @@
   padding-bottom: 0.5rem;
 }
 
+.optimal-strategy-table-container {
+  width: 100%;
+  overflow: auto;
+  margin-bottom: 1.5rem;
+}
+
 .optimal-strategy-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 2rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  overflow: auto;
 }
 
 .optimal-strategy-table th,

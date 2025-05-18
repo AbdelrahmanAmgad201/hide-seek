@@ -1,160 +1,195 @@
+import { useState, useEffect } from "react";
+
+export function chooseIndexFromDistribution(probabilities) {
+    const rand = Math.random();
+    let cumulative = 0;
+    for (let i = 0; i < probabilities.length; i++) {
+        cumulative += probabilities[i];
+        if (rand <= cumulative) {
+            return i;
+        }
+    }
+    return probabilities.length - 1; // Fallback for floating-point issues
+}
+
 export function simulateGames(
-    hideOptimal, 
-    seekerOptimal, 
-    data, 
-    setSimulationData, 
-    setShowPopup
-)
-{
+    hideOptimal,
+    seekerOptimal,
+    data,
+    setSimulationData,
+    setShowPopup,
+    numGames = 100
+) {
     if (!hideOptimal || !seekerOptimal || !data) return;
-    
-    const numGames = 100;
+
     const n = data.board.length;
-    
-    // Initialize counters for each cell
+
     const hiderDistribution = Array(n).fill().map(() => Array(n).fill(0));
     const seekerDistribution = Array(n).fill().map(() => Array(n).fill(0));
-    
-    // Simulate 100 games
+
+    let totalScore = 0;
+
     for (let game = 0; game < numGames; game++) {
-      // Simulate hider's choice based on optimal strategy probabilities
-      let hiderRandom = Math.random();
-      let hiderChoice = 0;
-      let cumulativeProbH = 0;
-      
-      for (let i = 0; i < hideOptimal.result.probabilities.length; i++) {
-        cumulativeProbH += hideOptimal.result.probabilities[i];
-        if (hiderRandom <= cumulativeProbH) {
-          hiderChoice = i;
-          break;
-        }
-      }
-      
-      // Simulate seeker's choice based on optimal strategy probabilities
-      let seekerRandom = Math.random();
-      let seekerChoice = 0;
-      let cumulativeProbS = 0;
-      
-      for (let i = 0; i < seekerOptimal.result.probabilities.length; i++) {
-        cumulativeProbS += seekerOptimal.result.probabilities[i];
-        if (seekerRandom <= cumulativeProbS) {
-          seekerChoice = i;
-          break;
-        }
-      }
-      
-      // Record the outcome
-      hiderDistribution[hiderChoice][seekerChoice]++;
-      seekerDistribution[seekerChoice][hiderChoice]++;
+        const hiderChoice = chooseIndexFromDistribution(hideOptimal.result.probabilities);
+        const seekerChoice = chooseIndexFromDistribution(seekerOptimal.result.probabilities);
+
+        hiderDistribution[hiderChoice][seekerChoice]++;
+        seekerDistribution[seekerChoice][hiderChoice]++;
+        totalScore += data.board[hiderChoice][seekerChoice];
     }
-    
-    // Calculate percentage distributions
+
+    const averageScore = totalScore / numGames;
+
     const hiderPercentages = hiderDistribution.map(row => 
-      row.map(cell => (cell / numGames) * 100)
+        row.map(cell => (cell / numGames) * 100)
     );
-    
+
     const seekerPercentages = seekerDistribution.map(row => 
-      row.map(cell => (cell / numGames) * 100)
+        row.map(cell => (cell / numGames) * 100)
     );
-    
-    // Row and column totals for hider and seeker
+
     const hiderRowTotals = hiderDistribution.map(row => 
-      row.reduce((sum, cell) => sum + cell, 0)
+        row.reduce((sum, cell) => sum + cell, 0)
     );
-    
+
     const seekerRowTotals = seekerDistribution.map(row => 
-      row.reduce((sum, cell) => sum + cell, 0)
+        row.reduce((sum, cell) => sum + cell, 0)
     );
-    
+
+    const hiderColTotals = Array(n).fill(0);
+    const seekerColTotals = Array(n).fill(0);
+
+    for (let col = 0; col < n; col++) {
+        for (let row = 0; row < n; row++) {
+            hiderColTotals[col] += hiderDistribution[row][col];
+            seekerColTotals[col] += seekerDistribution[row][col];
+        }
+    }
+
     setSimulationData({
-      hiderDistribution,
-      seekerDistribution,
-      hiderPercentages,
-      seekerPercentages,
-      hiderRowTotals,
-      seekerRowTotals,
-      numGames
+        hiderDistribution,
+        seekerDistribution,
+        hiderPercentages,
+        seekerPercentages,
+        hiderRowTotals,
+        seekerRowTotals,
+        hiderColTotals,
+        seekerColTotals,
+        totalScore,
+        averageScore,
+        numGames
     });
-    
+
     setShowPopup(true);
+}
+
+export function Simulation({ simulationData, setShowPopup, data }) {
+  const [maxPercentage, setMaxPercentage] = useState(0);
+  
+  // Find max percentage for color scaling
+  useEffect(() => {
+    if (simulationData) {
+      let max = 0;
+        
+        // Check hider percentages for the max
+      simulationData.hiderPercentages.forEach(row => {
+        row.forEach(percentage => {
+          if (percentage > max) max = percentage;
+        });
+      });
+        
+      // Row and column totals could also contain the max value
+      simulationData.hiderRowTotals.forEach(total => {
+        const percentage = (total / simulationData.numGames * 100);
+        if (percentage > max) max = percentage;
+      });
+        
+      setMaxPercentage(max);
+    }
+  }, [simulationData]);
+
+  // Helper function to calculate cell color based on value and max
+  const getCellStyle = (percentage, isTotal = false) => {
+    // Linear scaling from 0 (white) to maxPercentage (full color)
+    const opacity = percentage / Math.max(1, maxPercentage);
+    
+    // If percentage is 0, make it pure white
+    if (percentage === 0) {
+      return {
+        backgroundColor: 'white',
+        color: 'black'
+      };
+    }
+      
+    const backgroundColor = isTotal 
+      ? `rgba(100, 149, 237, ${opacity})` // Cornflower blue for totals
+      : `rgba(255, 165, 0, ${opacity})`; // Orange for regular cells
+    
+    return {
+      backgroundColor,
+      color: opacity > 0.5 ? 'white' : 'black'
+    };
   };
 
+  return (
+    <div className="simulation-popup">
+      <div className="popup-content">
+        <span className="close-button" onClick={() => setShowPopup(false)}>&times;</span>
+        <h2>Strategy Simulation ({simulationData.numGames} Games)</h2>
+        <p><strong>Total Score:</strong> {simulationData.totalScore}</p>
+        <p><strong>Average Score:</strong> {simulationData.averageScore.toFixed(2)}</p>
 
-export function Simulation({simulationData, setShowPopup, data}) {
-    return (
-        <div className="simulation-popup">
-            <div className="popup-content">
-            <span className="close-button" onClick={() => setShowPopup(false)}>&times;</span>
-            <h2>Strategy Simulation (100 Games)</h2>
-            
-            <div className="simulation-container">
-                {/* Hider's Distribution */}
-                <div className="distribution-section">
-                <h3>Hider's Position Distribution</h3>
-                <table className="distribution-table">
-                    <tbody>
-                    <tr>
-                        <th></th>
-                        {data.board[0].map((_, colIndex) => (
-                        <th key={colIndex}>S{colIndex + 1}</th>
-                        ))}
-                        <th>Total</th>
-                    </tr>
-                    {simulationData.hiderPercentages.map((row, rowIndex) => (
-                        <tr key={rowIndex}>
-                        <th>H{rowIndex + 1}</th>
+        <div className="simulation-container">
+          <div className="distribution-section">
+            <table className="distribution-table">
+              <tbody>
+                <tr>
+                  <th></th>
+                  {data.board[0].map((_, colIndex) => (
+                      <th key={colIndex}>S{colIndex + 1}</th>
+                  ))}
+                  <th>Total</th>
+                </tr>
+                {simulationData.hiderPercentages.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    <th>H{rowIndex + 1}</th>
                         {row.map((percentage, colIndex) => (
-                            <td 
+                          <td
                             key={colIndex}
-                            style={{ 
-                                backgroundColor: `rgba(255, 165, 0, ${percentage / 100})`,
-                                color: percentage > 50 ? 'white' : 'black'
-                            }}
-                            >
+                            style={getCellStyle(percentage)}
+                          >
                             {percentage.toFixed(1)}%
-                            </td>
+                          </td>
                         ))}
-                        <td>{simulationData.hiderRowTotals[rowIndex]}</td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
-                </div>
-                
-                {/* Seeker's Distribution */}
-                <div className="distribution-section">
-                <h3>Seeker's Position Distribution</h3>
-                <table className="distribution-table">
-                    <tbody>
-                    <tr>
-                        <th></th>
-                        {data.board[0].map((_, colIndex) => (
-                        <th key={colIndex}>H{colIndex + 1}</th>
-                        ))}
-                        <th>Total</th>
+                        <td style={getCellStyle(
+                          (simulationData.hiderRowTotals[rowIndex] / simulationData.numGames * 100), 
+                          true
+                        )}>
+                        {(
+                          simulationData.hiderRowTotals[rowIndex] /
+                          simulationData.numGames *
+                          100
+                        ).toFixed(1)}%
+                      </td>
                     </tr>
-                    {simulationData.seekerPercentages.map((row, rowIndex) => (
-                        <tr key={rowIndex}>
-                        <th>S{rowIndex + 1}</th>
-                        {row.map((percentage, colIndex) => (
-                            <td 
-                            key={colIndex}
-                            style={{ 
-                                backgroundColor: `rgba(255, 165, 0, ${percentage / 100})`,
-                                color: percentage > 50 ? 'white' : 'black'
-                            }}
-                            >
-                            {percentage.toFixed(1)}%
-                            </td>
-                        ))}
-                        <td>{simulationData.seekerRowTotals[rowIndex]}</td>
-                        </tr>
+                ))}
+                <tr>
+                  <th>Total</th>
+                  {simulationData.hiderColTotals.map((sum, colIndex) => (
+                    <td 
+                      key={colIndex}
+                      style={getCellStyle(sum / simulationData.numGames * 100, true)}
+                    >
+                      {(sum / simulationData.numGames * 100).toFixed(1)}%
+                    </td>
                     ))}
-                    </tbody>
-                </table>
-                </div>
-            </div>
-            </div>
+                    <td style={getCellStyle(100, true)}>100%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-    )
+      </div>
+    </div>
+  );
 }

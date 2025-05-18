@@ -15,7 +15,10 @@ def init_game():
     is_2d = data.get('is_2d', True)
     apply_proximity = data.get('apply_proximity', True)
     game_instance = Game(n, is_2d=is_2d, apply_proximity=apply_proximity)
-    return jsonify({"board": game_instance.board.tolist()}), 200
+    return jsonify({
+        "board": game_instance.board.tolist(),
+        "originalBoard": game_instance.original.tolist()          
+    }), 200
 
 @app.route('/solve', methods=['POST'])
 def solve_game():

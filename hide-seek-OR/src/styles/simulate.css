@@ -11,7 +11,7 @@
   z-index: 1000;
 }
 
-.popup-content {
+.simulation-popup .popup-content {
   background-color: white;
   padding: 20px;
   padding-top: 30px;
@@ -23,7 +23,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.close-button {
+.simulation-popup .close-button {
   position: absolute;
   top: 10px;
   right: 15px;
@@ -32,39 +32,39 @@
   color: #777;
 }
 
-.close-button:hover {
+.simulation-popup .close-button:hover {
   color: #333;
 }
 
-.simulation-container {
+.simulation-popup .simulation-container {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-.distribution-section {
+.simulation-popup .distribution-section {
   margin-bottom: 20px;
 }
 
-.distribution-section h3 {
+.simulation-popup .distribution-section h3 {
   margin-bottom: 10px;
   color: #333;
 }
 
-.distribution-table {
+.simulation-popup .distribution-table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 15px;
 }
 
-.distribution-table th,
-.distribution-table td {
+.simulation-popup .distribution-table th,
+.simulation-popup .distribution-table td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: center;
 }
 
-.distribution-table th {
+.simulation-popup .distribution-table th {
   background-color: #f2f2f2;
   color: #333;
 }

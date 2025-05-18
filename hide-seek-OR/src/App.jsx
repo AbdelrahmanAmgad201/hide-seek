@@ -106,7 +106,7 @@ function App() {
     console.log('Initialized with settings:', newSettings, 'Response:', newData);
 
     const n = newSettings.n;
-    const board = newData.board;
+    const board = newData.originalBoard;
     const size = !newSettings.is2D ? n : n * n;
     const worldArray  = [];
       for (let j = 0; j < size; j++) {

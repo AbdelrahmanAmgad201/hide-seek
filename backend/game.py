@@ -4,6 +4,7 @@ from scipy.optimize import linprog
 
 class Game:
     board = None
+    original = None
     N = None
     is_2d = None
 
@@ -24,6 +25,7 @@ class Game:
             self.board[i, i] = -np.random.randint(1, 4)
 
         # print(self.board)
+        self.original = self.board.copy()
         if apply_proximity:
            self.update_proximity()
 
@@ -107,17 +109,3 @@ class Game:
         value    = res.x[-1]       # result
 
         return {"probabilities": strategy, "value": value}
-
-
-# G = Game(4 , is_2d= False)
-# print(G.board)
-
-# board = [[3,  -1,  -3],
-#          [ -2, 4,  -1],
-#          [ -5,  -6, 2]]
-
-# print(G.solve_engine(board, player=1))
-# print(G.solve_engine(board, player=2))
-
-# print(G.solve(player=1))
-# print(G.solve(player=2))

@@ -23,6 +23,14 @@ function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [settings, setSettings] = useState(null);
   const [data, setData] = useState(null);
+  const [world, setWorld] = useState([]);
+  const [showMatrix, setShowMatrix] = useState(false);
+  const [selectedTiles, setSelectedTiles] = useState({}); // { 3: 'user', 7: 'computer' }
+  const [showPopup, setShowPopup] = useState(false);
+
+
+
+
   const [hideOptimal, setHideOptimal] = useState(null);
   const [seekerOptimal, setSeekerOptimal] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
@@ -35,6 +43,25 @@ function App() {
   const refModeAnalysis = useRef(null);
   const refRoleHide = useRef(null);
   const refRoleSeek = useRef(null);
+
+  const handleTileClick = (index) => {
+    if (index in selectedTiles) return; 
+
+    const newSelected = { ...selectedTiles, [index]: 'user' };
+
+    // Computer picks a random unselected tile
+    const availableIndices = world
+      .map((_, i) => i)
+      .filter((i) => !(i in newSelected));
+
+    if (availableIndices.length > 0) {
+      const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+      newSelected[randomIndex] = 'computer';
+      console.log(`Computer chose index: ${randomIndex}`);
+    }
+
+    setSelectedTiles(newSelected);
+};
 
   const toggleSidebar = () => {
     setIsCollapsed((prev) => {
@@ -59,6 +86,8 @@ function App() {
   
   
   const handleGenerate = async () => {
+     setSelectedTiles({});  
+
     const newSettings = {
       is2D: ref2D.current.checked,
       proximity: refProximity.current.checked,
@@ -77,22 +106,47 @@ function App() {
 
     const n = newSettings.n;
     const board = newData.board;
-    const world = [];
-      for (let j = 0; j < n; j++) {
+    const size = !newSettings.is2D ? n : n * n;
+    const worldArray  = [];
+      for (let j = 0; j < size; j++) {
         let neighborValue = j + 1;
-        if (j + 1 >= n) {
+        if (j + 1 >= size) {
           neighborValue = j - 1;
         } 
-        console.log(neighborValue)
         const key = `${board[j][neighborValue]}:${board[j][j]*-1}`;
-        console.log(key)
-        world[j] = images[key] || null; 
+        worldArray [j] = images[key] || null; 
       }
-    console.log('World grid with images:', world);
+      setWorld(worldArray);
+    console.log('World grid with images:', worldArray );
   };
 
   return (
     <div className="container">
+        <button
+          className="info-icon"
+          onClick={() => setShowPopup(true)}
+            title="Show all images"
+        >
+           🖼️
+        </button>
+        {showPopup && (
+          <div className="popup-overlay" onClick={() => setShowPopup(false)}>
+            <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+              <h3>Image Reference</h3>
+              <div className="image-list">
+                {Object.entries(images).map(([key, path]) => (
+                  <div key={key} className="image-item">
+                    <img src={path} alt={key} />
+                    <span>{"hider "+key+" seeker"}</span>
+                  </div>
+                ))}
+              </div>
+              <button className="close-button" onClick={() => setShowPopup(false)}>Close</button>
+            </div>
+          </div>
+        )}
+
+
       <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className={`top-side-bar ${isCollapsed ? 'collapsedBtn' : ''}`}>
           <button className="toggle-button" onClick={toggleSidebar}>
@@ -180,32 +234,78 @@ function App() {
           </div>
         )}
       </div>
+{data && settings && (
+  <div className="game-section">
+    {/* Image Grid */}
+    <div className="world-grid">
+      {settings.is2D ? (
+        <div className="grid-2d">
+          {Array.from({ length: settings.n }, (_, i) => (
+            <div key={i} className="row">
+              {world.slice(i * settings.n, (i + 1) * settings.n).map((imgSrc, j) => (
+                <img
+                  key={j}
+                  src={imgSrc}
+                  alt={`Tile ${i},${j}`}
+                   className={`tile-img ${selectedTiles[i * settings.n + j] === 'user' ? 'user-selected' : selectedTiles[i * settings.n + j] === 'computer' ? 'computer-selected' : ''}`}
+                  onClick={() => handleTileClick(i * settings.n + j)}
+                  style={{ cursor: ((i * settings.n + j) in selectedTiles || settings.mode =='analysis') ? 'not-allowed' : 'pointer' }}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="row">
+          {world.map((imgSrc, i) => (
+            <img
+              key={i}
+              src={imgSrc}
+              alt={`Tile ${i}`}
+              className={`tile-img ${selectedTiles[i] === 'user' ? 'user-selected' : selectedTiles[i] === 'computer' ? 'computer-selected' : ''}`}
+              onClick={() => handleTileClick(i)}
+              style={{ cursor: (i in selectedTiles || settings.mode =='analysis') ? 'not-allowed' : 'pointer' }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
 
-      {settings != null && data != null && 
-        <div className="main">
-          {/* Game Matrix */}
-          <h1>Board Matrix</h1>
-          <table className="board-table">
-            <tbody>
-              <tr>
-                <th></th>
-                {data.board[0].map((_, colIndex) => (
-                  <th key={colIndex}>S{colIndex + 1}</th>
+    {/* Toggle Button */}
+    <button className="toggle-matrix-button" onClick={() => setShowMatrix(prev => !prev)}>
+      {showMatrix ? "Hide Matrix" : "Show Matrix"}
+    </button>
+
+    {/* Matrix Table */}
+    {showMatrix && (
+      <div className="main">
+        <h1>Board Matrix</h1>
+        <table className="board-table">
+          <tbody>
+            <tr>
+              <th></th>
+              {data.board[0].map((_, colIndex) => (
+                <th key={colIndex}>S{colIndex + 1}</th>
+              ))}
+            </tr>
+            {data.board.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                <th>H{rowIndex + 1}</th>
+                {row.map((cell, colIndex) => (
+                  <td key={colIndex}>{cell}</td>
                 ))}
               </tr>
-              {data.board.map((row, rowIndex) => (
-                <tr key={rowIndex}>
-                  <th>H{rowIndex + 1}</th>
-                  {row.map((cell, colIndex) => (
-                    <td key={colIndex}>{cell}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+)}
+
           
           {/* Analysis Results */}
-          {settings.mode === 'analysis' && 
+          {settings&& settings.mode === 'analysis' && 
            hideOptimal != null && seekerOptimal != null && (
             <div className="analysis-results">
               <h2>Optimal Strategy</h2>
@@ -268,8 +368,7 @@ function App() {
             />
           )}
         </div>
-      }
-    </div>
+   
   );
 }
 

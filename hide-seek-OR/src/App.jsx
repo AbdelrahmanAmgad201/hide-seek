@@ -35,7 +35,11 @@ function App() {
   const [simulationCount, setSimulationCount] = useState(100);
   const [hiderScore, setHiderScore] = useState(0);
   const [seekerScore, setSeekerScore] = useState(0);
-
+  const [hiderWins, setHiderWins] = useState(0);
+  const [seekerWins, setSeekerWins] = useState(0);
+  const [gamesPlayed, setGamesPlayed] = useState(0);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [showSnackbar, setShowSnackbar] = useState(false);
 
   const [showMatrix, setShowMatrix] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -49,36 +53,85 @@ function App() {
   const refRoleHide = useRef(null);
   const refRoleSeek = useRef(null);
 
-  const handleTileClick = (index) => {
-    if (index in selectedTiles) return; 
-
-    const newSelected = { ...selectedTiles, [index]: 'user' };
-
-    // Computer picks a random unselected tile
-    const availableIndices = world
-      .map((_, i) => i)
-      .filter((i) => !(i in newSelected));
-
-    if (availableIndices.length > 0) {
-      let randomIndex =0 
-      if(settings.role == "seeker"){
-        randomIndex = chooseIndexFromDistribution(hideOptimal.result.probabilities);
-      }else{
-        randomIndex = chooseIndexFromDistribution(seekerOptimal.result.probabilities);
-      }
-        
-      newSelected[randomIndex] = 'computer';
-      console.log(`Computer chose index: ${randomIndex}`);
-      const userIndex = index;
-      const computerIndex = randomIndex;
-      const payoff = data.board;
-
-      setSeekerScore(seekerScore+-payoff[userIndex][computerIndex]);
-      setHiderScore(hiderScore+payoff[userIndex][computerIndex]);
+  useEffect(() => {
+    if (showSnackbar) {
+      const timer = setTimeout(() => {
+        setShowSnackbar(false);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
+  }, [showSnackbar]);
 
+  const showMessage = (message) => {
+    setSnackbarMessage(message);
+    setShowSnackbar(true);
+  };
+
+  const handleTileClick = (index) => {
+    if (settings.mode !== 'interactive') return;
+    
+    // User makes their move
+    const newSelected = { ...selectedTiles };
+    newSelected[index] = 'user';
+    
+    // Computer picks a tile based on optimal strategy
+    let computerIndex = 0;
+    if (settings.role === "seeker") {
+      computerIndex = chooseIndexFromDistribution(hideOptimal.result.probabilities);
+    } else {
+      computerIndex = chooseIndexFromDistribution(seekerOptimal.result.probabilities);
+    }
+    
+    newSelected[computerIndex] = 'computer';
+    
+    // Calculate payoff
+    const payoff = data.board;
+    const result = payoff[index][computerIndex];
+    
+    // Update scores
+    setSeekerScore(prev => prev - result);
+    setHiderScore(prev => prev + result);
+    setGamesPlayed(prev => prev + 1);
+    
+    // Update win counts
+    if (index === computerIndex) {
+      // Same location - seeker wins
+      setSeekerWins(prev => prev + 1);
+    } else {
+      // Different locations - hider wins
+      setHiderWins(prev => prev + 1);
+    }
+    
+    // Update selected tiles
     setSelectedTiles(newSelected);
-};
+    
+    // Show appropriate message
+    if (settings.role === 'hide') {
+      if (index === computerIndex) {
+        showMessage('Seeker caught you!');
+      } else {
+        showMessage('You hid successfully!');
+      }
+    } else if (settings.role === 'seek') {
+      if (index === computerIndex) {
+        showMessage('You found the hider successfully!');
+      } else {
+        showMessage('You didn\'t find the hider.');
+      }
+    }
+    
+    // Clear selections after a short delay
+    setTimeout(() => {
+      setSelectedTiles({});
+      
+      // Show guidance message for next move
+      if (settings.role === 'hide') {
+        showMessage('Choose where to hide');
+      } else {
+        showMessage('Choose where to search');
+      }
+    }, 1500);
+  };
 
   const toggleSidebar = () => {
     setIsCollapsed((prev) => {
@@ -101,11 +154,13 @@ function App() {
     });
   };
   
-  
   const handleGenerate = async () => {
-     setSelectedTiles({});  
-     setHiderScore(0);
-     setSeekerScore(0);
+    setSelectedTiles({});  
+    setHiderScore(0);
+    setSeekerScore(0);
+    setHiderWins(0);
+    setSeekerWins(0);
+    setGamesPlayed(0);
 
     const newSettings = {
       is2D: ref2D.current.checked,
@@ -126,17 +181,28 @@ function App() {
     const n = newSettings.n;
     const board = newData.originalBoard;
     const size = !newSettings.is2D ? n : n * n;
-    const worldArray  = [];
-      for (let j = 0; j < size; j++) {
-        let neighborValue = j + 1;
-        if (j + 1 >= size) {
-          neighborValue = j - 1;
-        } 
-        const key = `${board[j][neighborValue]}:${board[j][j]*-1}`;
-        worldArray [j] = images[key] || null; 
-      }
-      setWorld(worldArray);
-    console.log('World grid with images:', worldArray );
+    const worldArray = [];
+    for (let j = 0; j < size; j++) {
+      let neighborValue = j + 1;
+      if (j + 1 >= size) {
+        neighborValue = j - 1;
+      } 
+      const key = `${board[j][neighborValue]}:${board[j][j]*-1}`;
+      worldArray[j] = images[key] || null; 
+    }
+    setWorld(worldArray);
+    console.log('World grid with images:', worldArray);
+    
+    // Show initial guidance message
+    if (newSettings.mode === 'interactive') {
+      setTimeout(() => {
+        if (newSettings.role === 'hide') {
+          showMessage('Choose where to hide');
+        } else {
+          showMessage('Choose where to search');
+        }
+      }, 500);
+    }
   };
 
   return (
@@ -144,9 +210,9 @@ function App() {
       <button
         className="info-icon"
         onClick={() => setShowPopup(true)}
-          title="Show all images"
+        title="Show all images"
       >
-          🖼️
+        🖼️
       </button>
 
       {showPopup && (
@@ -246,10 +312,19 @@ function App() {
 
       {data && settings && (
         <div className="game-section">
-          {settings.mode === 'interactive' && hiderScore !== null && seekerScore !== null && (
+          {settings.mode === 'interactive' && (
             <div className="score-display">
-              <p><strong>Seeker Score:</strong> {seekerScore}</p>
-              <p><strong>Hider Score:</strong> {hiderScore}</p>
+              <p><strong>Seeker Wins:</strong> {seekerWins}</p>
+              <p><strong>Hider Wins:</strong> {hiderWins}</p>
+              <p><strong>Total Score:</strong> {Math.abs(seekerScore)}</p>
+              <p><strong>Games Played:</strong> {gamesPlayed}</p>
+            </div>
+          )}
+
+          {/* Snackbar */}
+          {settings.mode === 'interactive' && (
+            <div className={`snackbar ${showSnackbar ? 'show' : ''}`}>
+              {snackbarMessage}
             </div>
           )}
 
@@ -266,7 +341,7 @@ function App() {
                         alt={`Tile ${i},${j}`}
                         className={`tile-img ${selectedTiles[i * settings.n + j] === 'user' ? 'user-selected' : selectedTiles[i * settings.n + j] === 'computer' ? 'computer-selected' : ''}`}
                         onClick={() => handleTileClick(i * settings.n + j)}
-                        style={{ cursor: ((i * settings.n + j) in selectedTiles || settings.mode =='analysis') ? 'not-allowed' : 'pointer' }}
+                        style={{ cursor: settings.mode === 'analysis' ? 'not-allowed' : 'pointer' }}
                       />
                     ))}
                   </div>
@@ -281,7 +356,7 @@ function App() {
                     alt={`Tile ${i}`}
                     className={`tile-img ${selectedTiles[i] === 'user' ? 'user-selected' : selectedTiles[i] === 'computer' ? 'computer-selected' : ''}`}
                     onClick={() => handleTileClick(i)}
-                    style={{ cursor: (i in selectedTiles || settings.mode =='analysis') ? 'not-allowed' : 'pointer' }}
+                    style={{ cursor: settings.mode === 'analysis' ? 'not-allowed' : 'pointer' }}
                   />
                 ))}
               </div>
@@ -333,7 +408,7 @@ function App() {
                   min="1"
                   value={simulationCount}
                   onChange={(e) => setSimulationCount(Number(e.target.value))}
-                  />
+                />
               </div>
             </div>
           )}

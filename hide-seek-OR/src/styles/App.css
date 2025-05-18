@@ -259,6 +259,7 @@
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+
 .score-display {
   margin-top: 10px;
   font-size: 1.2em;
@@ -266,4 +267,65 @@
   gap: 2rem;
   justify-content: center;
   color: #333;
+}
+
+.snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -125px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 4px;
+  padding: 16px;
+  position: fixed;
+  z-index: 100;
+  left: 50%;
+  bottom: 30px;
+  font-size: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.snackbar.show {
+  visibility: visible;
+  opacity: 1;
+}
+
+.score-display {
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.score-display p {
+  margin: 5px 20px;
+  font-size: 16px;
+}
+
+.score-display p strong {
+  color: #333;
+}
+
+/* Animation for tile selection */
+.user-selected {
+  animation: pulse 1s ease-in-out;
+  box-shadow: 0 0 0 2px #4CAF50;
+}
+
+.computer-selected {
+  animation: pulse 1s ease-in-out;
+  box-shadow: 0 0 0 2px #f44336;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }

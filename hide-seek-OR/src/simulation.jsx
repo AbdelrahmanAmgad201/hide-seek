@@ -28,6 +28,8 @@ export function simulateGames(
     const seekerDistribution = Array(n).fill().map(() => Array(n).fill(0));
 
     let totalScore = 0;
+    let hiderWins = 0;
+    let seekerWins = 0;
 
     for (let game = 0; game < numGames; game++) {
         const hiderChoice = chooseIndexFromDistribution(hideOptimal.result.probabilities);
@@ -35,7 +37,16 @@ export function simulateGames(
 
         hiderDistribution[hiderChoice][seekerChoice]++;
         seekerDistribution[seekerChoice][hiderChoice]++;
-        totalScore += data.board[hiderChoice][seekerChoice];
+        
+        const gameScore = data.board[hiderChoice][seekerChoice];
+        totalScore += gameScore;
+        
+        // Count wins for hider and seeker
+        if (gameScore > 0) {
+            hiderWins++;
+        } else {
+            seekerWins++;
+        }
     }
 
     const averageScore = totalScore / numGames;
@@ -77,7 +88,9 @@ export function simulateGames(
         seekerColTotals,
         totalScore,
         averageScore,
-        numGames
+        numGames,
+        hiderWins,
+        seekerWins
     });
 
     setShowPopup(true);
@@ -138,6 +151,8 @@ export function Simulation({ simulationData, setShowPopup, data }) {
         <h2>Strategy Simulation ({simulationData.numGames} Games)</h2>
         <p><strong>Total Score:</strong> {simulationData.totalScore}</p>
         <p><strong>Average Score:</strong> {simulationData.averageScore.toFixed(2)}</p>
+        <p><strong>Hider Wins:</strong> {simulationData.hiderWins} ({(simulationData.hiderWins / simulationData.numGames * 100).toFixed(1)}%)</p>
+        <p><strong>Seeker Wins:</strong> {simulationData.seekerWins} ({(simulationData.seekerWins / simulationData.numGames * 100).toFixed(1)}%)</p>
 
         <div className="simulation-container">
           <div className="distribution-section">

@@ -316,7 +316,8 @@ function App() {
             <div className="score-display">
               <p><strong>Seeker Wins:</strong> {seekerWins}</p>
               <p><strong>Hider Wins:</strong> {hiderWins}</p>
-              <p><strong>Total Score:</strong> {Math.abs(seekerScore)}</p>
+              <p><strong>Hider Score:</strong> {hiderScore}</p>
+              <p><strong>Seeker Score:</strong> {seekerScore}</p>
               <p><strong>Games Played:</strong> {gamesPlayed}</p>
             </div>
           )}

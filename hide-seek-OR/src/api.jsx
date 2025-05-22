@@ -35,6 +35,7 @@ export async function solveGame(player) {
 
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Solving failed');
+        console.log(data);
         return data;
     } catch (error) {
         console.error('Solve error:', error);
